@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AVJ Study Hub | Secure OS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        /* ==========================================================================
+           1. SISTEMA DE VARIABLES AVANZADO (THEMING)
+           ========================================================================== */
+        :root {
+            /* Tema Oscuro Premium (Por defecto) */
+            --bg-deep: #050505;
+            --bg-base: #0a0a0c;
+            --bg-surface: #121214;
+            --glass-bg: rgba(25, 25, 30, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-highlight: rgba(255, 255, 255, 0.15);
+            
+            --text-main: #ffffff;
+            --text-muted: #888890;
+            
+            --accent-primary: #4f46e5;
+            --accent-secondary: #8b5cf6;
+            --accent-glow: rgba(79, 70, 229, 0.4);
+            
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            
+            --shadow-float: 0 20px 40px rgba(0,0,0,0.4);
+            --border-radius-lg: 24px;
+            --border-radius-md: 16px;
+            --border-radius-sm: 10px;
+        }
+
+        /* ==========================================================================
+           2. RESET Y TIPOGRAFÍA
+           ========================================================================== */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Fondos Animados y Decoración */
+        .ambient-light {
+            position: absolute; border-radius: 50%; filter: blur(100px); z-index: 0; opacity: 0.4; animation: float 10s infinite alternate; pointer-events: none;
+        }
+        .light-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, var(--accent-primary), transparent 60%); }
+        .light-2 { bottom: -10%; right: -10%; width: 40vw; height: 40vw; background: radial-gradient(circle, var(--accent-secondary), transparent 60%); animation-delay: -5s; }
+
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(5%, 5%) scale(1.1); } }
+
+        /* ==========================================================================
+           3. SISTEMA DE SEGURIDAD (LOCK SCREEN VISUAL)
+           ========================================================================== */
+        #secure-lock {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(5, 5, 5, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 99999; transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s;
+        }
+
+        .lock-container {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 40px; border-radius: var(--border-radius-lg);
+            text-align: center; width: 90%; max-width: 420px;
+            box-shadow: var(--shadow-float); position: relative; overflow: hidden;
+        }
+
+        .lock-container::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        .lock-icon-wrapper {
+            width: 80px; height: 80px; border-radius: 50%; background: rgba(79, 70, 229, 0.1);
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+            border: 2px solid var(--accent-primary); box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .pin-display {
+            display: flex; justify-content: center; gap: 16px; margin: 30px 0;
+        }
+        .pin-dot {
+            width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--glass-border);
+            background: transparent; transition: all 0.3s;
+        }
+        .pin-dot.filled { background: var(--text-main); border-color: var(--text-main); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .pin-dot.error { border-color: var(--danger); background: var(--danger); }
+
+        .numpad {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 20px;
+        }
+        .num-btn {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-sm); color: var(--text-main); font-size: 1.5rem;
+            font-weight: 600; padding: 16px 0; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .num-btn:hover, .num-btn:active { background: rgba(255, 255, 255, 0.15); transform: scale(0.95); }
+        .num-action { font-size: 1rem; color: var(--text-muted); background: transparent; border: none; }
+        .num-action:hover { color: var(--text-main); }
+
+        .auth-input {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+            padding: 16px; border-radius: var(--border-radius-sm); color: white; font-size: 1.1rem;
+            text-align: center; margin-bottom: 20px; outline: none; transition: border 0.3s;
+        }
+        .auth-input:focus { border-color: var(--accent-primary); }
+
+        /* ==========================================================================
+           4. LAYOUT PRINCIPAL (APP SHELL)
+           ========================================================================== */
+        .app-layout {
+            display: flex; width: 100%; height: 100%; z-index: 10;
+        }
+
+        /* Sidebar Decorado */
+        .sidebar {
+            width: 300px; background: rgba(10, 10, 12, 0.7); backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border); display: flex; flex-direction: column;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .sidebar-header {
+            padding: 32px 24px; display: flex; align-items: center; gap: 16px;
+        }
+        .logo-box {
+            width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px var(--accent-glow);
+        }
+        .brand-text { font-size: 1.4rem; font-weight: 800; letter-spacing: 0.5px; }
+
+        .nav-section { padding: 0 16px; flex: 1; overflow-y: auto; }
+        .nav-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); padding: 0 16px; margin: 24px 0 8px; font-weight: 700; }
+        
+        .nav-item {
+            display: flex; align-items: center; gap: 16px; padding: 14px 16px; margin-bottom: 6px;
+            color: var(--text-muted); text-decoration: none; border-radius: 14px; font-weight: 500;
+            transition: all 0.3s ease; border: 1px solid transparent; cursor: pointer;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text-main); border-color: var(--glass-border); }
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(79, 70, 229, 0.15), transparent);
+            color: var(--text-main); border-color: var(--accent-primary); border-left: 4px solid var(--accent-primary);
+        }
+        .nav-icon { width: 20px; height: 20px; fill: currentColor; }
+
+        .user-profile-widget {
+            padding: 24px; border-top: 1px solid var(--glass-border); background: rgba(0,0,0,0.2);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--accent-secondary); display: flex; align-items: center; justify-content: center; font-weight: 700; border: 2px solid white; }
+
+        /* Contenido Principal */
+        .main-content {
+            flex: 1; display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        .topbar {
+            height: 80px; display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; background: linear-gradient(180deg, rgba(10,10,12,0.8), transparent);
+            z-index: 20;
+        }
+        
+        .greeting { font-size: 1.5rem; font-weight: 600; display: flex; align-items: center; gap: 12px; }
+        .greeting svg { width: 28px; height: 28px; color: var(--accent-primary); animation: wave 2s infinite; transform-origin: bottom center; }
+        @keyframes wave { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(15deg); } 75% { transform: rotate(-15deg); } }
+
+        .topbar-actions { display: flex; gap: 16px; }
+        .icon-btn {
+            width: 48px; height: 48px; border-radius: 50%; background: var(--glass-bg);
+            border: 1px solid var(--glass-border); color: var(--text-main); display: flex;
+            align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+
+        .view-container {
+            flex: 1; padding: 0 40px 40px; overflow-y: auto; scroll-behavior: smooth;
+        }
+        .view { display: none; animation: fadeUp 0.5s ease-out forwards; }
+        .view.active { display: block; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ==========================================================================
+           5. COMPONENTES UI COMPLEJOS
+           ========================================================================== */
+        .page-header { margin-bottom: 32px; }
+        .page-header h1 { font-size: 2.5rem; font-weight: 800; background: linear-gradient(to right, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .page-header p { color: var(--text-muted); font-size: 1.1rem; margin-top: 8px; }
+
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 32px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+
+        .glass-card {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-lg); padding: 32px; position: relative;
+            backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .glass-card:hover { border-color: var(--glass-highlight); box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
+
+        /* Formularios */
+        .form-group { margin-bottom: 24px; position: relative; }
+        .form-group label { display: block; margin-bottom: 10px; font-weight: 500; font-size: 0.95rem; color: var(--text-muted); }
+        .form-control {
+            width: 100%; background: rgba(0,0,0,0.4); border: 2px solid var(--glass-border);
+            padding: 16px 20px; border-radius: var(--border-radius-md); color: white;
+            font-size: 1.05rem; transition: all 0.3s;
+        }
+        .form-control:focus { outline: none; border-color: var(--accent-primary); background: rgba(79, 70, 229, 0.05); }
+
+        /* Botones */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white; border: none; padding: 16px 32px; border-radius: var(--border-radius-md);
+            font-size: 1.1rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center;
+            justify-content: center; gap: 12px; width: 100%; transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(79, 70, 229, 0.5); }
+        .btn-primary svg { width: 24px; height: 24px; fill: currentColor; }
+
+        /* Decoración de Resultados (Calculadora) */
+        .result-circle {
+            width: 200px; height: 200px; border-radius: 50%; margin: 0 auto 24px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 8px solid rgba(255,255,255,0.05); position: relative;
+        }
+        .result-circle::after {
+            content: ''; position: absolute; top: -8px; left: -8px; right: -8px; bottom: -8px;
+            border-radius: 50%; border: 8px solid transparent; border-top-color: var(--accent-primary);
+            animation: spin 2s linear infinite; display: none;
+        }
+        .result-circle.loading::after { display: block; }
+        .result-value { font-size: 4rem; font-weight: 800; line-height: 1; color: var(--text-main); }
+        .result-label { font-size: 1rem; color: var(--text-muted); margin-top: 8px; }
+
+        /* Módulo Horario y Mochila IA */
+        .ai-assistant-banner {
+            background: linear-gradient(90deg, rgba(79, 70, 229, 0.1), rgba(16, 185, 129, 0.1));
+            border: 1px solid var(--accent-primary); border-radius: var(--border-radius-md);
+            padding: 24px; display: flex; gap: 24px; align-items: center; margin-bottom: 32px;
+        }
+        .ai-avatar { width: 64px; height: 64px; background: rgba(79, 70, 229, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .ai-avatar svg { width: 32px; height: 32px; fill: var(--accent-primary); }
+
+        .upload-zone {
+            border: 2px dashed rgba(255,255,255,0.2); border-radius: var(--border-radius-md);
+            padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s;
+            background: rgba(0,0,0,0.2);
+        }
+        .upload-zone:hover { border-color: var(--accent-primary); background: rgba(79, 70, 229, 0.05); }
+
+        .timetable-matrix {
+            display: grid; grid-template-columns: 80px repeat(5, 1fr); gap: 2px;
+            background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-md); overflow: hidden;
+        }
+        .tt-cell { background: var(--bg-surface); padding: 16px 12px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+        .tt-head { background: rgba(255,255,255,0.05); font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
+        .tt-time { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+        .tt-class { background: rgba(79, 70, 229, 0.15); border-left: 4px solid var(--accent-primary); border-radius: 6px; padding: 12px; text-align: left; }
+        .tt-class h4 { font-size: 0.95rem; margin-bottom: 4px; }
+        .tt-class span { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* Loader */
+        .loader-bars { display: none; gap: 4px; height: 30px; justify-content: center; align-items: center; margin: 20px 0; }
+        .loader-bars div { width: 6px; height: 100%; background: var(--accent-primary); border-radius: 4px; animation: bounce 1s infinite ease-in-out; }
+        .loader-bars div:nth-child(2) { animation-delay: 0.1s; background: var(--accent-secondary); }
+        .loader-bars div:nth-child(3) { animation-delay: 0.2s; }
+        @keyframes bounce { 0%, 100% { height: 30%; } 50% { height: 100%; } }
+
+        /* Responsive Móvil */
+        @media (max-width: 1024px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); z-index: 100; }
+            .sidebar.open { transform: translateX(0); }
+            .menu-toggle { display: block; }
+            .topbar { padding: 0 20px; }
+            .view-container { padding: 0 20px 20px; }
+            .timetable-matrix { min-width: 800px; }
+            .overflow-wrapper { overflow-x: auto; padding-bottom: 16px; }
+        }
+        .menu-toggle { display: none; background: none; border: none; cursor: pointer; color: white; padding: 8px; }
+    </style>
+</head>
+<body>
+
+    <!-- DECORACIÓN DE FONDO -->
+    <div class="ambient-light light-1"></div>
+    <div class="ambient-light light-2"></div>
+
+    <!-- ==========================================================================
+         LOCK SCREEN (SISTEMA DE PIN AVANZADO)
+         ========================================================================== -->
+    <div id="secure-lock">
+        <div class="lock-container">
+            <div class="lock-icon-wrapper">
+                <!-- SVG Candado -->
+                <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-primary);">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+            </div>
+            <h2 style="font-size: 1.8rem; margin-bottom: 8px;">Acceso Restringido</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px;">Terminal StudyHub. Identifícate.</p>
+
+            <input type="text" id="username-input" class="auth-input" placeholder="Tu Nombre (Ej: AVJ)" autocomplete="off">
+            
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Ingresa tu PIN de 4 dígitos</p>
+            
+            <div class="pin-display" id="pin-display">
+                <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+            </div>
+
+            <div class="numpad">
+                <button class="num-btn" onclick="addPin(1)">1</button>
+                <button class="num-btn" onclick="addPin(2)">2</button>
+                <button class="num-btn" onclick="addPin(3)">3</button>
+                <button class="num-btn" onclick="addPin(4)">4</button>
+                <button class="num-btn" onclick="addPin(5)">5</button>
+                <button class="num-btn" onclick="addPin(6)">6</button>
+                <button class="num-btn" onclick="addPin(7)">7</button>
+                <button class="num-btn" onclick="addPin(8)">8</button>
+                <button class="num-btn" onclick="addPin(9)">9</button>
+                <button class="num-btn num-action" onclick="clearPin()">BORRAR</button>
+                <button class="num-btn" onclick="addPin(0)">0</button>
+                <button class="num-btn num-action" style="color: var(--success);" onclick="submitPin()">ENTER</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         APP SHELL (ESTRUCTURA PRINCIPAL)
+         ========================================================================== -->
+    <div class="app-layout">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-box">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>
+                </div>                 <span class="brand-text">StudyHub</span>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Herramientas Base</div>
+                <a class="nav-item active" data-target="view-calc">
+                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-6 16H7v-2h6v2zm4-4H7v-2h10v2zm0-4H7V9h10v2zm0-4H7V5h10v2z"/></svg>
+                    Calculadora Notas
+                </a>
+                <a class="nav-item" data-target="view-horario">
+                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7v-5z"/></svg>
+                    Horario & Mochila IA
+                </a>
+
+                <div class="nav-label">Módulos Inteligentes</div>
+                <a class="nav-item" data-target="view-flash">
+                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
+                    Flashcards IA
+                </a>
+                <a class="nav-item" data-target="view-resumidor">
+                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M14 17H4v2h10v-2zm6-8H4v2h16V9zM4 15h16v-2H4v2zM4 5v2h16V5H4z"/></svg>
+                    Resumidor Textos
+                </a>
+                <a class="nav-item" data-target="view-banco">
+                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+                    Banco & Biblioteca
+                </a>
+            </div>
+
+            <div class="user-profile-widget">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div class="avatar" id="avatar-letters">US</div>
+                    <div style="display:flex; flex-direction:column;">
+                        <span id="display-name" style="font-weight:600; font-size:0.95rem;">Usuario</span>
+                        <span style="font-size:0.75rem; color:var(--success);">En línea</span>
+                    </div>
+                </div>
+                <button class="num-action" onclick="lockSystem()" style="cursor:pointer;" title="Bloquear Sistema">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            
+            <header class="topbar">
+                <div style="display:flex; align-items:center;">
+                    <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+                    </button>
+                    <div class="greeting">
+                        Hola, <span id="header-name">Estudiante</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2C13.67 2 13 2.67 13 3.5c0 .54.29 1.01.72 1.28L8 10H4c-1.1 0-2 .9-2 2v2h2v4c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2v-2h2l5.28-5.28c.27.43.74.72 1.28.72.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5c-.3 0-.58.09-.82.23L15.35 6.4c-.06-.15-.12-.3-.21-.44L16.23 4.8c.24.14.52.23.82.23.83 0 1.5-.67 1.5-1.5S17.88 2 17.05 2c-.54 0-1.01.29-1.28.72L14.5 2z"/></svg>
+                    </div>
+                </div>
+                
+                <div class="topbar-actions">
+                    <button class="icon-btn" title="Notificaciones" onclick="alert('Sin notificaciones nuevas.')">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="view-container">
+                
+                <section id="view-calc" class="view active">
+                    <div class="page-header">
+                        <h1>Motor de Probabilidad Académica</h1>
+                        <p>Simulador de notas basado en la fórmula x = (Meta - (Actual * (1 - Peso))) / Peso.</p>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="glass-card">
+                            <h3 style="margin-bottom: 24px; display:flex; align-items:center; gap:10px;">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="var(--accent-primary)"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 16H7v-2h10v2zm0-4H7v-2h10v2zm0-4H7V9h10v2zm0-4H7V5h10v2z"/></svg>
+                                Parámetros de Entrada
+                            </h3>
+                            <div class="form-group">
+                                <label>Promedio Acumulado Actual (Ej: 6.5)</label>
+                                <input type="number" id="calc-actual" class="form-control" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label>Nota Meta a Alcanzar (Ej: 7.0)</label>
+                                <input type="number" id="calc-meta" class="form-control" step="0.01" value="7.0">
+                            </div>
+                            <div class="form-group">
+                                <label>Peso del Examen Final (%)</label>
+                                <input type="number" id="calc-peso" class="form-control" step="1" value="30">
+                            </div>
+                            <button class="btn-primary" onclick="ejecutarSimulacion()">
+                                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                                Ejecutar Simulación
+                            </button>
+                        </div>
+
+                        <div class="glass-card" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+                            <div class="result-circle" id="calc-circle">
+                                <span class="result-value" id="calc-res-num">-</span>
+                                <span class="result-label" id="calc-res-lbl">Esperando datos</span>
+                            </div>
+                            <h2 id="calc-res-title" style="margin-bottom:8px;">Panel en Reposo</h2>
+                            <p id="calc-res-desc" style="color:var(--text-muted);">Ingresa tus calificaciones a la izquierda y presiona calcular para ver tu proyección.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-horario" class="view">
+                    <div class="page-header">
+                        <h1>Gestor de Tiempo & Asistente IA</h1>
+                        <p>Visualiza tu semana y deja que la IA organice tu mochila.</p>
+                    </div>
+
+                    <div class="ai-assistant-banner">
+                        <div class="ai-avatar">
+                            <svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a3 3 0 0 1 3 3v2h2v6h-2v1a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-1H4v-6h2v-2a3 3 0 0 1 3-3h1V5.73A2 2 0 0 1 12 2z"/></svg>
+                        </div>
+                        <div style="flex:1;">
+                            <h3 style="margin-bottom:8px;">Análisis Predictivo de Mochila</h3>
+                            <p style="color:var(--text-muted); font-size:0.95rem; line-height:1.5;">
+                                Sube una foto de tu horario escolar físico. La inteligencia artificial extraerá las materias de mañana y te recordará qué cuadernos llevar (ej. cuaderno de contabilidad, calculadora).
+                            </p>
+                        </div>
+                        <div style="min-width: 200px;">
+                            <button class="btn-primary" onclick="document.getElementById('upload-horario').click()" style="padding:12px; font-size:1rem;">
+                                Subir Foto
+                            </button>
+                            <input type="file" id="upload-horario" accept="image/*" style="display:none;" onchange="procesarImagenIA()">
+                        </div>
+                    </div>
+
+                    <div id="ia-loader" class="loader-bars"><div></div><div></div><div></div></div>
+                    <div id="ia-response" class="glass-card" style="display:none; border-color:var(--success); background:rgba(16, 185, 129, 0.05); margin-bottom:32px;">
+                        </div>
+
+                    <div class="glass-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                            <h2>Horario Digital</h2>
+                            <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="exportarHorario()">Exportar PNG</button>
+                        </div>
+                        
+                        <div class="overflow-wrapper">
+                            <div class="timetable-matrix" id="matriz-horario">
+                                <div class="tt-cell tt-head">Hora</div>
+                                <div class="tt-cell tt-head">Lunes</div>
+                                <div class="tt-cell tt-head">Martes</div>
+                                <div class="tt-cell tt-head">Miércoles</div>
+                                <div class="tt-cell tt-head">Jueves</div>
+                                <div class="tt-cell tt-head">Viernes</div>
+
+                                <div class="tt-cell tt-time">08:00<br>09:30</div>
+                                <div class="tt-cell"><div class="tt-class"><h4>Contabilidad</h4><span>Aula 201</span></div></div>
+                                <div class="tt-cell"></div>
+                                <div class="tt-cell"><div class="tt-class"><h4>Matemáticas</h4><span>Aula 105</span></div></div>
+                                <div class="tt-cell"><div class="tt-class" style="border-color:var(--warning);"><h4>Historia</h4><span>Auditorio</span></div></div>
+                                <div class="tt-cell"><div class="tt-class" style="border-color:var(--success);"><h4>Inglés</h4><span>Lab 3</span></div></div>
+
+                                <div class="tt-cell tt-time">09:30<br>11:00</div>
+                                <div class="tt-cell"></div>
+                                <div class="tt-cell"><div class="tt-class" style="border-color:var(--success);"><h4>Inglés</h4><span>Lab 3</span></div></div>
+                                <div class="tt-cell"></div>
+                                <div class="tt-cell"><div class="tt-class"><h4>Contabilidad</h4><span>Aula 201</span></div></div>
+                                <div class="tt-cell"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-flash" class="view">
+                    <div class="page-header">
+                        <h1>Generador Neural de Flashcards</h1>
+                        <p>Convierte PDFs pesados en tarjetas de memoria activas en segundos.</p>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="glass-card">
+                            <div class="upload-zone" onclick="document.getElementById('upload-apuntes').click()">
+                                <svg viewBox="0 0 24 24" width="48" height="48" fill="var(--accent-primary)" style="margin-bottom:16px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                                <h3>Arrastra o sube tu archivo (PDF/DOCX)</h3>
+                                <p style="color:var(--text-muted); margin-top:8px;">Máximo 50MB</p>
+                                <input type="file" id="upload-apuntes" style="display:none;" onchange="generarFlashcards()">
+                            </div>
+                            
+                            <div style="margin: 24px 0; text-align:center; color:var(--text-muted);">O ingresa texto plano</div>
+                            
+                            <textarea class="form-control" rows="5" placeholder="Ej: El ciclo de Krebs es una ruta metabólica..."></textarea>
+                            <button class="btn-primary" style="margin-top:20px;" onclick="generarFlashcards()">Generar Set de Estudio</button>
+                        </div>
+
+                        <div class="glass-card" style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                            <div id="flash-loader" class="loader-bars"><div></div><div></div><div></div></div>
+                            
+                            <div id="flash-empty" style="text-align:center;">
+                                <svg viewBox="0 0 24 24" width="80" height="80" fill="var(--glass-border)" style="margin-bottom:16px;"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
+                                <h3 style="color:var(--text-muted);">No hay tarjetas activas</h3>
+                            </div>
+
+                            <div id="flash-active" style="display:none; width:100%; text-align:center;">
+                                <h3 style="margin-bottom: 16px;">Vista Previa del Set</h3>
+                                <div style="background:rgba(0,0,0,0.3); border:1px solid var(--accent-primary); border-radius:12px; padding:24px; text-align:left; margin-bottom:24px;">
+                                    <div style="font-size:0.8rem; color:var(--accent-primary); font-weight:700; margin-bottom:8px;">PREGUNTA GENERADA IA</div>
+                                    <p style="font-size:1.1rem; margin-bottom:16px;">¿Cuál es la función principal de la contabilidad en una empresa?</p>
+                                    <hr style="border:0; border-top:1px dashed var(--glass-border); margin-bottom:16px;">
+                                    <div style="font-size:0.8rem; color:var(--success); font-weight:700; margin-bottom:8px;">RESPUESTA ESPERADA</div>
+                                    <p style="color:var(--text-muted);">Registrar, clasificar y resumir las operaciones mercantiles para interpretar sus resultados.</p>
+                                </div>
+                                <button class="btn-primary" style="background:var(--success);"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Iniciar Modo Repaso</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-resumidor" class="view">
+                    <div class="page-header">
+                        <h1>Sintetizador de Textos</h1>
+                        <p>Extrae las ideas principales de documentos extensos.</p>
+                    </div>
+                    <div class="glass-card">
+                        <textarea class="form-control" rows="10" placeholder="Pega aquí el contenido..."></textarea>
+                        <div style="display:flex; gap:16px; margin-top:24px;">
+                            <button class="btn-primary" style="flex:1;">Resumen Ejecutivo (Corto)</button>
+                            <button class="btn-primary" style="flex:1; background:transparent; border:2px solid var(--accent-primary);">Viñetas Estructuradas</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-banco" class="view">
+                    <div class="page-header">
+                        <h1>Repositorio Central</h1>
+                        <p>Banco de preguntas y biblioteca de archivos organizados.</p>
+                    </div>
+                    <div class="grid-3">
+                        <div class="glass-card" style="text-align:center; border-color:var(--accent-primary); background:rgba(79,70,229,0.05);">
+                            <svg viewBox="0 0 24 24" width="60" height="60" fill="var(--accent-primary)" style="margin-bottom:16px;"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3v2z"/></svg>
+                            <h3>Matemáticas Básicas</h3>
+                            <p style="color:var(--text-muted); margin:8px 0 16px;">12 Archivos • 3 Exámenes</p>
+                            <button class="btn-primary" style="padding:10px;">Abrir Carpeta</button>
+                        </div>
+                        <div class="glass-card" style="text-align:center;">
+                            <svg viewBox="0 0 24 24" width="60" height="60" fill="var(--text-muted)" style="margin-bottom:16px;"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg>
+                            <h3>Contabilidad I</h3>
+                            <p style="color:var(--text-muted); margin:8px 0 16px;">5 Archivos • 1 Simulador</p>
+                            <button class="btn-primary" style="padding:10px; background:rgba(255,255,255,0.1);">Abrir Carpeta</button>
+                        </div>
+                        <div class="glass-card" style="text-align:center; border:2px dashed var(--glass-border); cursor:pointer;">
+                            <svg viewBox="0 0 24 24" width="60" height="60" fill="var(--glass-border)" style="margin-bottom:16px;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                            <h3 style="color:var(--text-muted);">Crear Nueva Materia</h3>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ----------------------------------------------------
+        // 1. SISTEMA DE SEGURIDAD (PIN & LOCALSTORAGE)
+        // ----------------------------------------------------
+        let currentPin = "";
+        const expectedPinLength = 4;
+        const lockScreen = document.getElementById('secure-lock');
+        const dots = document.querySelectorAll('.pin-dot');
+        const inputName = document.getElementById('username-input');
+
+        window.onload = () => {
+            const savedName = localStorage.getItem('sh_user');
+            const savedPin = localStorage.getItem('sh_pin');
+            
+            // Si ya hay usuario, autollenamos el nombre para que solo meta el PIN
+            if(savedName && savedPin) {
+                inputName.value = savedName;
+                inputName.style.display = 'none'; // Ocultamos el input si ya está registrado
+            }
+        };
+
+        function addPin(num) {
+            if(currentPin.length < expectedPinLength) {
+                currentPin += num;
+                updatePinDisplay();
+            }
+        }
+
+        function clearPin() {
+            currentPin = "";
+            updatePinDisplay();
+        }
+
+        function updatePinDisplay() {            dots.forEach((dot, index) => {
+                if(index < currentPin.length) {
+                    dot.classList.add('filled');
+                    dot.classList.remove('error');
+                } else {
+                    dot.classList.remove('filled', 'error');
+                }
+            });
+        }
+
+        function submitPin() {
+            const name = inputName.value.trim();
+            const savedPin = localStorage.getItem('sh_pin');
+
+            if(name === "" || currentPin.length !== 4) {
+                showPinError();
+                return;
+            }
+
+            // Primer inicio de sesión (Registrar)
+            if(!savedPin) {
+                localStorage.setItem('sh_user', name);
+                localStorage.setItem('sh_pin', currentPin);
+                unlockSystem(name);
+            } 
+            // Validar PIN existente
+            else {
+                if(currentPin === savedPin) {
+                    unlockSystem(localStorage.getItem('sh_user'));
+                } else {
+                    showPinError();
+                }
+            }
+        }
+
+        function showPinError() {
+            dots.forEach(dot => { dot.classList.add('error'); });
+            setTimeout(clearPin, 500);
+        }
+
+        function unlockSystem(username) {
+            document.getElementById('header-name').innerText = username;
+            document.getElementById('display-name').innerText = username;
+            document.getElementById('avatar-letters').innerText = username.substring(0, 2).toUpperCase();
+            
+            lockScreen.style.transform = 'scale(1.1)';
+            lockScreen.style.opacity = '0';
+            setTimeout(() => { lockScreen.style.display = 'none'; }, 600);
+        }
+
+        function lockSystem() {
+            clearPin();
+            lockScreen.style.display = 'flex';
+            setTimeout(() => { 
+                lockScreen.style.opacity = '1'; 
+                lockScreen.style.transform = 'scale(1)';
+            }, 50);
+        }
+
+        // ----------------------------------------------------
+        // 2. NAVEGACIÓN SPA (Single Page Application)
+        // ----------------------------------------------------
+        const navItems = document.querySelectorAll('.nav-item');
+        const views = document.querySelectorAll('.view');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                // Remover active
+                navItems.forEach(n => n.classList.remove('active'));
+                views.forEach(v => v.classList.remove('active'));
+                
+                // Set active
+                e.currentTarget.classList.add('active');
+                const targetId = e.currentTarget.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active');
+
+                // Cerrar menú móvil
+                if(window.innerWidth <= 1024) {
+                    document.getElementById('sidebar').classList.remove('open');
+                }
+            });
+        });
+
+        // ----------------------------------------------------
+        // 3. MOTOR DE CÁLCULO DE NOTAS
+        // ----------------------------------------------------
+        function ejecutarSimulacion() {
+            const actual = parseFloat(document.getElementById('calc-actual').value);
+            const meta = parseFloat(document.getElementById('calc-meta').value);
+            const pesoFinal = parseFloat(document.getElementById('calc-peso').value) / 100;
+            
+            if(isNaN(actual) || isNaN(meta) || isNaN(pesoFinal)) {
+                alert("Completa todos los campos numéricos.");
+                return;
+            }
+
+            const pesoActual = 1 - pesoFinal;
+            
+            // Lógica explícita exigida: La variable (x) debe estar a la izquierda
+            const x = (meta - (actual * pesoActual)) / pesoFinal;
+
+            // Manipulación del DOM
+            const circle = document.getElementById('calc-circle');
+            const resNum = document.getElementById('calc-res-num');
+            const resLbl = document.getElementById('calc-res-lbl');
+            const resTitle = document.getElementById('calc-res-title');
+            const resDesc = document.getElementById('calc-res-desc');
+
+            circle.classList.add('loading');
+            resNum.innerText = "-";
+            
+            // Simular cálculo complejo
+            setTimeout(() => {
+                circle.classList.remove('loading');
+                resNum.innerText = x.toFixed(2);
+                circle.style.borderColor = "var(--glass-border)";
+
+                if(x <= 0) {
+                    resNum.style.color = "var(--success)";
+                    circle.style.borderColor = "var(--success)";
+                    resLbl.innerText = "Sobre 10";
+                    resTitle.innerText = "¡Materia Asegurada!";
+                    resDesc.innerText = "Matemáticamente ya aprobaste. Un 0 en el examen es suficiente.";
+                } else if(x > 10) {
+                    resNum.style.color = "var(--danger)";
+                    circle.style.borderColor = "var(--danger)";
+                    resLbl.innerText = "Imposible";
+                    resTitle.innerText = "Escenario Crítico";
+                    resDesc.innerText = `Necesitas más de 10 puntos. Prepárate para el examen supletorio o de recuperación.`;
+                } else {
+                    resNum.style.color = "var(--accent-primary)";
+                    circle.style.borderColor = "var(--accent-primary)";
+                    resLbl.innerText = "Sobre 10";
+                    resTitle.innerText = "Meta Alcanzable";
+                    resDesc.innerText = `Debes enfocarte. Asegura al menos ${x.toFixed(2)} en la prueba final.`;
+                }
+            }, 800);
+        }
+
+        // ----------------------------------------------------
+        // 4. ASISTENTE IA PARA HORARIO Y MOCHILA
+        // ----------------------------------------------------
+        function procesarImagenIA() {
+            const fileInput = document.getElementById('upload-horario');
+            if(fileInput.files.length === 0) return;
+
+            const loader = document.getElementById('ia-loader');
+            const responseBox = document.getElementById('ia-response');
+            const username = localStorage.getItem('sh_user') || "Estudiante";
+
+            loader.style.display = "flex";
+            responseBox.style.display = "none";
+
+            // Simulación de OCR y Procesamiento de Lenguaje Natural
+            setTimeout(() => {
+                loader.style.display = "none";
+                responseBox.style.display = "block";
+                
+                responseBox.innerHTML = `
+                    <h3 style="color:var(--success); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        Análisis Exitoso
+                    </h3>
+                    <p style="font-size:1.05rem; line-height:1.6;">
+                        Hola <strong>${username}</strong>, he analizado la imagen. 
+                        Basado en tu horario para mañana, tienes materias que requieren material específico.<br><br>
+                        <strong>Recordatorio de IA:</strong><br>
+                        ⚠️ Por favor, asegúrate de meter el <strong>cuaderno de contabilidad</strong>, 
+                        tu calculadora científica y el texto de inglés en la mochila. ¡Que tengas un excelente día!
+                    </p>
+                `;
+            }, 2500);
+        }
+
+        // ----------------------------------------------------
+        // 5. EXPORTADOR DE HORARIO
+        // ----------------------------------------------------
+        function exportarHorario() {
+            const element = document.getElementById('matriz-horario');
+            html2canvas(element, { 
+                backgroundColor: "#0a0a0c", 
+                scale: 2 // Alta resolución
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Horario_AVJ_Secure.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        // ----------------------------------------------------
+        // 6. GENERADOR DE FLASHCARDS SIMULADO
+        // ----------------------------------------------------
+        function generarFlashcards() {
+            const loader = document.getElementById('flash-loader');
+            const emptyState = document.getElementById('flash-empty');
+            const activeState = document.getElementById('flash-active');
+
+            emptyState.style.display = "none";
+            activeState.style.display = "none";
+            loader.style.display = "flex";
+
+            setTimeout(() => {
+                loader.style.display = "none";
+                activeState.style.display = "block";
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
+
+       
+              
+            
